@@ -1,5 +1,6 @@
 import os
 import time
+import chromedriver_autoinstaller
 
 from dotenv import load_dotenv
 from utils.exceptions import EnvironmentNotConfiguredError
@@ -27,6 +28,7 @@ def fetch_environment() -> Tuple[str, str, str]:
 
 
 def create_selenium_instance(headless: bool = False):
+    chromedriver_autoinstaller.install()
 
     options = Options()
 
