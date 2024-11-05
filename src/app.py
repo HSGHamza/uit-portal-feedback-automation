@@ -76,13 +76,16 @@ if __name__ == "__main__":
     )
     feedback_table_rows = feedback_table.find_elements(By.CSS_SELECTOR, "tr")
 
+    all_feedbacks_already_submitted = True
+    solved_feedbacks = 0
+
     for x in range(0, len(feedback_table_rows)):
         for row in feedback_table_rows[1:]:
             cols = row.find_elements(By.CSS_SELECTOR, "td")
 
             if "not submitted" in cols[6].get_attribute("innerText").lower():
+                all_feedbacks_already_submitted = False
                 print("[FEEDBACK_AUTOMATION: Found an unsubmitted feedback!]")
-
                 cols[7].click()
 
                 # Wait for feedback page to load
@@ -94,9 +97,8 @@ if __name__ == "__main__":
                 # Solve & submit the feedback
 
                 solve_and_submit_feedback(driver)
-
                 print("[FEEDBACK_AUTOMATION: Feedback submitted!]")
-
+                solved_feedbacks += 1
                 time.sleep(2)
 
                 break
@@ -108,4 +110,8 @@ if __name__ == "__main__":
         )
         feedback_table_rows = feedback_table.find_elements(By.CSS_SELECTOR, "tr")
 
+    if all_feedbacks_already_submitted:
+        print("[FEEDBACK_AUTOMATION: No unsubmitted feedbacks found!]")
+
+    print(f"[FEEDBACK_AUTOMATION: {solved_feedbacks} feedbacks solved]")
     print("[FEEDBACK_AUTOMATION: Finished!]")
