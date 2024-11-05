@@ -1,7 +1,11 @@
 import time
 
 from utils.exceptions import FeedbackFormNotAvailableError
-from utils.helpers import fetch_environment, create_selenium_instance
+from utils.helpers import (
+    fetch_environment,
+    create_selenium_instance,
+    solve_and_submit_feedback,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -30,7 +34,7 @@ if __name__ == "__main__":
     login_button = driver.find_element(By.CSS_SELECTOR, "#btnlgn")
     login_button.click()
 
-    # Click on the feedback button from the sidebar
+    # Open the feedback page if available else throw error
 
     general_list = WebDriverWait(driver, 15).until(
         EC.visibility_of_element_located(
@@ -65,4 +69,43 @@ if __name__ == "__main__":
     if feedback_form_not_available:
         raise FeedbackFormNotAvailableError("No feedback form found :(")
 
-    time.sleep(5)
+    # Open individual feedback pages from feedback table
+
+    feedback_table = WebDriverWait(driver, 15).until(
+        EC.visibility_of_element_located((By.CSS_SELECTOR, "table.rgMasterTable"))
+    )
+    feedback_table_rows = feedback_table.find_elements(By.CSS_SELECTOR, "tr")
+
+    for x in range(0, len(feedback_table_rows)):
+        for row in feedback_table_rows[1:]:
+            cols = row.find_elements(By.CSS_SELECTOR, "td")
+
+            if "not submitted" in cols[6].get_attribute("innerText").lower():
+                print("[FEEDBACK_AUTOMATION: Found an unsubmitted feedback!]")
+
+                cols[7].click()
+
+                # Wait for feedback page to load
+
+                WebDriverWait(driver, 15).until(
+                    EC.visibility_of_element_located((By.CSS_SELECTOR, "#btnSubmit"))
+                )
+
+                # Solve & submit the feedback
+
+                solve_and_submit_feedback(driver)
+
+                print("[FEEDBACK_AUTOMATION: Feedback submitted!]")
+
+                time.sleep(2)
+
+                break
+
+        # Update feedback_table as it has become stale now
+
+        feedback_table = WebDriverWait(driver, 15).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "table.rgMasterTable"))
+        )
+        feedback_table_rows = feedback_table.find_elements(By.CSS_SELECTOR, "tr")
+
+    print("[FEEDBACK_AUTOMATION: Finished!]")

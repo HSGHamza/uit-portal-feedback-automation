@@ -1,10 +1,14 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from utils.exceptions import EnvironmentNotConfiguredError
 from typing import Tuple
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_environment() -> Tuple[str, str, str]:
@@ -37,3 +41,45 @@ def create_selenium_instance(headless: bool = False):
     driver = webdriver.Chrome(options=options)
 
     return driver
+
+
+def solve_and_submit_feedback(driver: webdriver.Chrome):
+
+    # Solve the form
+
+    driver.execute_script(
+        """
+            const questions = document.querySelectorAll('div.ansMainDiv');
+            questions.forEach(question => {
+                let inputEl = question.querySelector('input');
+                let textEl = question.querySelector('textarea');
+                if (inputEl) {
+                    inputEl.click();
+                } else if (textEl) {
+                    textEl.value = "Good!";
+                }
+            })
+        """
+    )
+
+    # Click on the submit button
+
+    submit_btn = driver.find_element(By.CSS_SELECTOR, "#btnSubmit")
+    submit_btn.click()
+
+    time.sleep(2)
+
+    # Wait for the window alert & accept it
+
+    WebDriverWait(driver, 15).until(EC.alert_is_present())
+    alert = driver.switch_to.alert
+    alert.accept()
+
+    time.sleep(2)
+
+    # Wait for the proceed to portal button and then click on it
+
+    proceed_to_portal_btn = WebDriverWait(driver, 15).until(
+        EC.visibility_of_element_located((By.CSS_SELECTOR, "#btnbackToPortal"))
+    )
+    proceed_to_portal_btn.click()
